@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лабораторная работа № 1 — Число витков в обмотках трансформатора</title>
+<style>
+  :root {
+    --bg: #f3f1ea;
+    --paper: #fffefb;
+    --ink: #1d2433;
+    --muted: #5b6475;
+    --line: #d9d5c7;
+    --grid: rgba(70, 110, 170, .13);
+    --accent: #1f4e8c;
+    --accent-ink: #ffffff;
+    --accent-soft: #e4edf8;
+    --warn: #8a4b00;
+    --warn-soft: #fbefd9;
+    --ok: #1a6b3a;
+    --ok-soft: #e0f3e7;
+    --bad: #a12626;
+    --bad-soft: #fbe5e5;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(20, 30, 50, .06), 0 8px 24px rgba(20, 30, 50, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161f;
+      --paper: #1a2030;
+      --ink: #e8ebf2;
+      --muted: #98a2b8;
+      --line: #2e374b;
+      --grid: rgba(140, 170, 220, .08);
+      --accent: #7fb0f0;
+      --accent-ink: #0d1626;
+      --accent-soft: #1f2d46;
+      --warn: #f0b768;
+      --warn-soft: #3a2d17;
+      --ok: #6fd596;
+      --ok-soft: #173424;
+      --bad: #ff8f8f;
+      --bad-soft: #3b1c1c;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 64px; }
+
+  /* ---------- header ---------- */
+  header.hero {
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 22px 22px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px 28px 24px;
+    margin-bottom: 18px;
+  }
+  .badge {
+    display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 999px;
+  }
+  h1 { font-size: clamp(22px, 4.4vw, 32px); line-height: 1.22; margin: 12px 0 8px; font-weight: 700; }
+  .hero p { margin: 0; color: var(--muted); }
+
+  nav.toc {
+    display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none;
+  }
+  nav.toc a {
+    display: inline-block; text-decoration: none; color: var(--ink); font-size: 14.5px;
+    border: 1px solid var(--line); background: var(--paper); padding: 6px 12px; border-radius: 999px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+  /* ---------- cards ---------- */
+  section.card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px 26px;
+    margin-bottom: 16px;
+    scroll-margin-top: 12px;
+  }
+  section.card > h2 {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 20px; margin: 0 0 12px; line-height: 1.3;
+  }
+  .num {
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center; font-size: 15px; font-weight: 700;
+  }
+  h3 { font-size: 17px; margin: 18px 0 6px; }
+  p { margin: 0 0 10px; }
+  ul, ol { margin: 0 0 10px; padding-left: 1.3em; }
+  li { margin-bottom: 4px; }
+
+  .note, .tip {
+    border-radius: 10px; padding: 11px 14px; margin: 12px 0; font-size: 16px;
+  }
+  .note { background: var(--accent-soft); border-left: 4px solid var(--accent); }
+  .tip  { background: var(--warn-soft); border-left: 4px solid var(--warn); }
+  .note b, .tip b { display: block; margin-bottom: 2px; }
+  .tip b { color: var(--warn); }
+
+  .rewrite {
+    border: 1.5px dashed var(--accent); border-radius: 10px; padding: 12px 16px;
+    background: var(--accent-soft); margin: 10px 0 4px;
+  }
+  .rewrite .lbl { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); }
+  .rewrite p { margin: 4px 0 0; font-family: "Times New Roman", Times, serif; font-size: 19px; line-height: 1.5; }
+
+  /* ---------- formulas ---------- */
+  .formulas {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 12px 0;
+  }
+  .formula {
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; text-align: center;
+    font-family: "Times New Roman", Times, serif; font-size: 21px; background: var(--bg);
+  }
+  .formula small { display: block; font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .3em; text-align: center; line-height: 1.25; }
+  .frac > span:first-child { border-bottom: 1.6px solid currentColor; padding: 0 .35em .08em; }
+  .frac > span:last-child { padding: .08em .35em 0; }
+  .sym { font-family: "Times New Roman", Times, serif; font-size: 1.08em; }
+
+  dl.legend { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 10px 0; font-size: 16px; }
+  dl.legend dt { font-family: "Times New Roman", Times, serif; font-size: 18px; white-space: nowrap; }
+  dl.legend dd { margin: 0; color: var(--muted); }
+
+  /* ---------- steps ---------- */
+  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 8px 0 0; }
+  ol.steps > li {
+    counter-increment: step; position: relative; padding: 12px 14px 12px 56px;
+    border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; background: var(--bg);
+    transition: background .2s, border-color .2s;
+  }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 14px; top: 12px;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center; font-weight: 700; font-size: 15px;
+  }
+  ol.steps > li.done { background: var(--ok-soft); border-color: var(--ok); }
+  ol.steps > li.done::before { content: "✓"; background: var(--ok); color: var(--bg); }
+  ol.steps label { display: block; cursor: pointer; }
+  ol.steps .t { font-weight: 650; display: block; margin-bottom: 2px; }
+  ol.steps .d { color: var(--muted); font-size: 16px; display: block; }
+  ol.steps .d em { color: var(--ink); font-style: normal; font-weight: 600; }
+  ol.steps input[type=checkbox] {
+    position: absolute; right: 14px; top: 14px; width: 22px; height: 22px; accent-color: var(--ok); cursor: pointer;
+  }
+  ol.steps li { padding-right: 52px; }
+  .progress { display: flex; align-items: center; gap: 12px; margin: 6px 0 12px; font-size: 14.5px; color: var(--muted); }
+  .bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s; }
+
+  /* ---------- variant tabs + table ---------- */
+  .tabs { display: inline-flex; border: 1.5px solid var(--accent); border-radius: 10px; overflow: hidden; margin: 6px 0 12px; }
+  .tabs button {
+    font: inherit; font-weight: 600; padding: 8px 22px; border: 0; cursor: pointer;
+    background: transparent; color: var(--accent);
+  }
+  .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+  .tabs button:focus-visible { outline: 3px solid var(--warn); outline-offset: -3px; }
+
+  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.data { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 16px; }
+  table.data th, table.data td { border: 1.5px solid var(--ink); padding: 8px 6px; text-align: center; }
+  table.data thead th { background: var(--accent-soft); font-family: "Times New Roman", Times, serif; font-size: 17px; }
+  table.data td.given { font-weight: 700; font-size: 18px; }
+  table.data td.blank { background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 16px 16px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 16px 16px;
+    color: var(--muted); font-size: 14px; }
+  table.data .sub { display: block; font: 12px "Segoe UI", system-ui, sans-serif; color: var(--muted); font-weight: 400; }
+  .caption { font-size: 14.5px; color: var(--muted); margin-top: 8px; }
+
+  /* ---------- self-check ---------- */
+  .check { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0; }
+  .field label { display: block; font-size: 15px; margin-bottom: 4px; font-family: "Times New Roman", Times, serif; font-size: 18px; }
+  .field input {
+    width: 100%; font: inherit; font-size: 18px; padding: 9px 12px; border-radius: 9px;
+    border: 1.5px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  .field input:focus { outline: 3px solid var(--accent-soft); border-color: var(--accent); }
+  .field.ok input { border-color: var(--ok); background: var(--ok-soft); }
+  .field.bad input { border-color: var(--bad); background: var(--bad-soft); }
+  .field .msg { font-size: 14px; min-height: 1.3em; margin-top: 3px; }
+  .field.ok .msg { color: var(--ok); }
+  .field.bad .msg { color: var(--bad); }
+  button.primary {
+    font: inherit; font-weight: 650; cursor: pointer; padding: 10px 22px; border-radius: 10px;
+    border: 0; background: var(--accent); color: var(--accent-ink);
+  }
+  button.primary:hover { filter: brightness(1.08); }
+  button.ghost {
+    font: inherit; cursor: pointer; padding: 10px 18px; border-radius: 10px; margin-left: 6px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--ink);
+  }
+  .verdict { margin-top: 12px; font-weight: 600; min-height: 1.5em; }
+
+  /* ---------- conclusion ---------- */
+  .kt { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 16px; }
+  .kt th, .kt td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+  .kt th { background: var(--accent-soft); }
+  .starters { font-family: "Times New Roman", Times, serif; font-size: 18px; }
+  .starters li { margin-bottom: 8px; }
+  .blank-line { display: inline-block; min-width: 90px; border-bottom: 1.5px solid var(--muted); }
+
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0; background: var(--bg); }
+  details summary { cursor: pointer; font-weight: 650; }
+  details[open] summary { margin-bottom: 8px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 24px; }
+  .toolbar { text-align: right; margin-bottom: 10px; }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    section.card, header.hero { padding: 18px 16px; }
+    ol.steps > li { padding-left: 52px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; font-size: 12pt; }
+    .toolbar, nav.toc, .tabs, .progress, button, ol.steps input[type=checkbox], #selfcheck { display: none !important; }
+    section.card, header.hero { box-shadow: none; border-color: #999; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">Физика · 11 класс · Лабораторная работа</span>
+    <h1>Лабораторная работа № 1<br>«Определение числа витков в обмотках трансформатора»</h1>
+    <p>Электронная версия-инструкция. Работу вы оформляете и вычисляете сами на листе А4 в клетку — здесь вы найдёте всё, что нужно переписать и как выполнять каждый этап.</p>
+  </header>
+
+  <div class="toolbar"><button class="ghost" id="printBtn" type="button">🖨 Печать</button></div>
+
+  <nav aria-label="Содержание">
+    <ul class="toc">
+      <li><a href="#how">Как оформить лист</a></li>
+      <li><a href="#goal">Цель и приборы</a></li>
+      <li><a href="#theory">Формулы</a></li>
+      <li><a href="#table">Данные и таблица</a></li>
+      <li><a href="#steps">Ход работы</a></li>
+      <li><a href="#selfcheck">Проверь себя</a></li>
+      <li><a href="#conclusion">Как написать вывод</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===== 1. Оформление ===== -->
+  <section class="card" id="how">
+    <h2><span class="num">1</span>Как оформить лист А4</h2>
+    <p>Возьмите один лист А4 в клетку и подпишите: <b>Ф.И., класс, дата, вариант</b>. Затем разместите на нём разделы строго по порядку:</p>
+    <ol>
+      <li><b>Цель работы</b> — перепишите из раздела 2.</li>
+      <li><b>Приборы и материалы</b> — перепишите из раздела 2.</li>
+      <li><b>Таблица</b> — начертите по образцу из раздела 4 и впишите данные своего варианта.</li>
+      <li><b>Расчётные формулы</b> — выпишите из раздела 3.</li>
+      <li><b>Вычисления</b> — решение в клетку: «Дано», подстановка, расчёт, ответ.</li>
+      <li><b>Вывод</b> — составьте сами по плану из раздела 7.</li>
+    </ol>
+    <div class="tip"><b>Совет</b>Оставьте под «Вычисления» примерно половину листа — на нём вы запишете полное решение для N<sub>1</sub>, N<sub>2</sub> и k.</div>
+  </section>
+
+  <!-- ===== 2. Цель, приборы ===== -->
+  <section class="card" id="goal">
+    <h2><span class="num">2</span>Цель работы и приборы</h2>
+    <div class="rewrite">
+      <span class="lbl">Цель работы — перепишите на лист</span>
+      <p>Определить число витков в первичной и вторичной обмотках трансформатора и его коэффициент трансформации, используя дополнительную обмотку с известным числом витков.</p>
+    </div>
+    <div class="rewrite" style="margin-top:12px">
+      <span class="lbl">Приборы и материалы — перепишите на лист</span>
+      <p>Разборный трансформатор с сердечником и катушками; дополнительная катушка из изолированного провода с известным числом витков; источник переменного тока низкого напряжения (≈ 12 В); вольтметр переменного тока (или мультиметр); соединительные провода.</p>
+    </div>
+  </section>
+
+  <!-- ===== 3. Формулы ===== -->
+  <section class="card" id="theory">
+    <h2><span class="num">3</span>Расчётные формулы</h2>
+    <p><b>Идея метода.</b> Все катушки надеты на один сердечник, поэтому их витки пронизывает один и тот же переменный магнитный поток. Значит, на каждый виток приходится одинаковое напряжение, и напряжение на обмотке <b>пропорционально числу её витков</b>:</p>
+    <div class="formula" style="font-size:22px">
+      <span class="frac"><span>U<sub>1</sub></span><span>N<sub>1</sub></span></span> =
+      <span class="frac"><span>U<sub>2</sub></span><span>N<sub>2</sub></span></span> =
+      <span class="frac"><span>U<sub>доп</sub></span><span>N<sub>доп</sub></span></span>
+    </div>
+    <p style="margin-top:12px">Число витков дополнительной обмотки N<sub>доп</sub> известно, а напряжения измеряют вольтметром. Отсюда выражаются неизвестные величины — <b>эти формулы вы выписываете на лист</b>:</p>
+    <div class="formulas">
+      <div class="formula">N<sub>1</sub> = N<sub>доп</sub> · <span class="frac"><span>U<sub>1</sub></span><span>U<sub>доп</sub></span></span><small>число витков первичной обмотки</small></div>
+      <div class="formula">N<sub>2</sub> = N<sub>доп</sub> · <span class="frac"><span>U<sub>2</sub></span><span>U<sub>доп</sub></span></span><small>число витков вторичной обмотки</small></div>
+      <div class="formula">k = <span class="frac"><span>U<sub>1</sub></span><span>U<sub>2</sub></span></span> = <span class="frac"><span>N<sub>1</sub></span><span>N<sub>2</sub></span></span><small>коэффициент трансформации</small></div>
+    </div>
+    <dl class="legend">
+      <dt>N<sub>доп</sub></dt><dd>число витков дополнительной обмотки (дано, витков)</dd>
+      <dt>U<sub>1</sub>, U<sub>2</sub></dt><dd>напряжения на первичной и вторичной обмотках (В)</dd>
+      <dt>U<sub>доп</sub></dt><dd>напряжение на дополнительной обмотке (В)</dd>
+      <dt>N<sub>1</sub>, N<sub>2</sub></dt><dd>искомое число витков первичной и вторичной обмоток</dd>
+      <dt>k</dt><dd>коэффициент трансформации (число без единиц измерения)</dd>
+    </dl>
+  </section>
+
+  <!-- ===== 4. Данные ===== -->
+  <section class="card" id="table">
+    <h2><span class="num">4</span>Данные измерений и таблица</h2>
+    <p>Выберите <b>свой вариант</b> (его назовёт учитель). Значения, выделенные жирным, — результаты измерений. Остальные ячейки вы <b>вычисляете сами</b>.</p>
+    <div class="tabs" role="tablist" aria-label="Вариант">
+      <button role="tab" type="button" data-v="1" aria-selected="true">Вариант 1</button>
+      <button role="tab" type="button" data-v="2" aria-selected="false">Вариант 2</button>
+    </div>
+    <div class="tbl-scroll">
+      <table class="data" aria-live="polite">
+        <caption class="caption" style="caption-side:top;text-align:left;margin-bottom:6px">Таблица измерений и результатов (перечертите на лист)</caption>
+        <thead>
+          <tr>
+            <th>Вариант</th>
+            <th>N<sub>доп</sub><span class="sub">витков</span></th>
+            <th>U<sub>1</sub><span class="sub">В</span></th>
+            <th>U<sub>2</sub><span class="sub">В</span></th>
+            <th>U<sub>доп</sub><span class="sub">В</span></th>
+            <th>N<sub>1</sub><span class="sub">витков</span></th>
+            <th>N<sub>2</sub><span class="sub">витков</span></th>
+            <th>k</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="dataRow"></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Серые клетчатые ячейки (N<sub>1</sub>, N<sub>2</sub>, k) заполняются после вычислений.</p>
+  </section>
+
+  <!-- ===== 5. Ход работы ===== -->
+  <section class="card" id="steps">
+    <h2><span class="num">5</span>Ход работы — пошаговая инструкция</h2>
+    <div class="progress"><span id="progText">Выполнено: 0 из 7</span><div class="bar"><i id="progBar"></i></div></div>
+    <p style="font-size:15px;color:var(--muted)">Отмечайте галочкой каждый выполненный шаг.</p>
+    <ol class="steps" id="stepList">
+      <li>
+        <label><span class="t">Подготовьте лист</span>
+        <span class="d">Подпишите лист, перепишите <em>цель работы</em> и <em>приборы и материалы</em> (раздел 2).</span>
+        <input type="checkbox" aria-label="Шаг 1 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Поймите схему опыта</span>
+        <span class="d">К первичной обмотке подключён источник переменного тока. На один сердечник с ней надеты вторичная и дополнительная обмотки. Вольтметром измерили три напряжения: <em>U<sub>1</sub></em>, <em>U<sub>2</sub></em>, <em>U<sub>доп</sub></em>. Число витков дополнительной обмотки <em>N<sub>доп</sub></em> известно.</span>
+        <input type="checkbox" aria-label="Шаг 2 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Выпишите данные своего варианта</span>
+        <span class="d">Из таблицы (раздел 4) перенесите на лист N<sub>доп</sub>, U<sub>1</sub>, U<sub>2</sub>, U<sub>доп</sub> и запишите краткое <em>«Дано»</em> с единицами измерения.</span>
+        <input type="checkbox" aria-label="Шаг 3 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Запишите расчётные формулы</span>
+        <span class="d">Выпишите три формулы из раздела 3. Прежде чем считать, убедитесь, что понимаете, откуда они взялись: напряжение на витках пропорционально их числу.</span>
+        <input type="checkbox" aria-label="Шаг 4 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Вычислите N<sub>1</sub> и N<sub>2</sub></span>
+        <span class="d">Подставьте числа <em>вместе с единицами измерения</em> и посчитайте. Число витков — целое: округлите до целых. Проверьте, что вольты сократились и остались «витки».</span>
+        <input type="checkbox" aria-label="Шаг 5 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Вычислите коэффициент трансформации k</span>
+        <span class="d">Найдите k = U<sub>1</sub> / U<sub>2</sub>, округлите до сотых. <em>Проверка:</em> посчитайте ещё раз по формуле k = N<sub>1</sub> / N<sub>2</sub> — результаты должны совпасть (в пределах округления).</span>
+        <input type="checkbox" aria-label="Шаг 6 выполнен"></label>
+      </li>
+      <li>
+        <label><span class="t">Заполните таблицу и напишите вывод</span>
+        <span class="d">Внесите N<sub>1</sub>, N<sub>2</sub> и k в таблицу на листе. Затем составьте вывод по плану из раздела 7. Результат можно проверить в разделе 6.</span>
+        <input type="checkbox" aria-label="Шаг 7 выполнен"></label>
+      </li>
+    </ol>
+
+    <h3>Как оформить вычисления в клетку</h3>
+    <ul>
+      <li>Записывайте <b>формулу в общем виде</b> → затем <b>подстановку с числами и единицами</b> → затем <b>результат</b>.</li>
+      <li>Каждую величину считайте в отдельной строке, не «в уме» и не одной длинной цепочкой.</li>
+      <li>В конце вычислений напишите <b>«Ответ: N<sub>1</sub> = …, N<sub>2</sub> = …, k = …»</b>.</li>
+    </ul>
+    <div class="tip"><b>Частые ошибки</b>
+      Перепутать U<sub>1</sub> и U<sub>2</sub>; делить на U<sub>1</sub> вместо U<sub>доп</sub>; не записать единицы измерения; запятую в десятичной дроби принять за разделитель разрядов.
+    </div>
+  </section>
+
+  <!-- ===== 6. Проверка ===== -->
+  <section class="card" id="selfcheck">
+    <h2><span class="num">6</span>Проверь себя</h2>
+    <p>Решите задачу <b>на листе</b>, а затем введите свои ответы для выбранного варианта. Программа скажет только «верно» или «не совпало» — решение вы всегда выполняете сами.</p>
+    <div class="note"><b>Вариант для проверки</b><span id="checkVariant">Вариант 1</span> (переключается вместе с таблицей в разделе 4).</div>
+    <form id="checkForm" class="check" novalidate>
+      <div class="field" data-key="n1"><label for="in-n1">N<sub>1</sub>, витков</label><input id="in-n1" inputmode="decimal" autocomplete="off" placeholder="0"><div class="msg"></div></div>
+      <div class="field" data-key="n2"><label for="in-n2">N<sub>2</sub>, витков</label><input id="in-n2" inputmode="decimal" autocomplete="off" placeholder="0"><div class="msg"></div></div>
+      <div class="field" data-key="k"><label for="in-k">k</label><input id="in-k" inputmode="decimal" autocomplete="off" placeholder="0,00"><div class="msg"></div></div>
+    </form>
+    <button class="primary" type="button" id="checkBtn">Проверить</button>
+    <button class="ghost" type="button" id="resetBtn">Очистить</button>
+    <div class="verdict" id="verdict" role="status"></div>
+  </section>
+
+  <!-- ===== 7. Вывод ===== -->
+  <section class="card" id="conclusion">
+    <h2><span class="num">7</span>Как написать вывод</h2>
+    <p>Вывод — это <b>ваши результаты и их объяснение</b> в 3–5 предложениях. Он должен отвечать на вопросы: что делали, что получили, что это значит. Составьте его по плану (подставьте <i>свои</i> значения и слова):</p>
+    <ol class="starters">
+      <li><b>Что определяли.</b> «В ходе лабораторной работы я определил(а) число витков в … и … обмотках трансформатора с помощью …»</li>
+      <li><b>Что получили.</b> «Получено: N<sub>1</sub> = <span class="blank-line"></span>, N<sub>2</sub> = <span class="blank-line"></span>, коэффициент трансформации k = <span class="blank-line"></span>.»</li>
+      <li><b>Тип трансформатора.</b> Сравните k с единицей по таблице ниже и запишите, понижающий он или повышающий, и <i>во сколько раз</i> меняется напряжение.</li>
+      <li><b>Связь величин.</b> «Напряжение на обмотке … пропорционально … , так как все обмотки пронизывает …»</li>
+      <li><b>Точность (по желанию).</b> Назовите 1–2 причины, из-за которых результат мог быть неточным.</li>
+    </ol>
+
+    <table class="kt">
+      <thead><tr><th>Значение k</th><th>Тип трансформатора</th><th>Что происходит с напряжением</th></tr></thead>
+      <tbody>
+        <tr><td>k &gt; 1</td><td>понижающий</td><td>U<sub>2</sub> меньше U<sub>1</sub> (N<sub>1</sub> &gt; N<sub>2</sub>)</td></tr>
+        <tr><td>k &lt; 1</td><td>повышающий</td><td>U<sub>2</sub> больше U<sub>1</sub> (N<sub>1</sub> &lt; N<sub>2</sub>)</td></tr>
+        <tr><td>k = 1</td><td>разделительный</td><td>U<sub>2</sub> равно U<sub>1</sub></td></tr>
+      </tbody>
+    </table>
+
+    <details>
+      <summary>Подсказка: возможные причины погрешностей</summary>
+      <ul>
+        <li>Погрешность вольтметра и округление показаний.</li>
+        <li>Часть магнитного потока не пронизывает все витки (потоки рассеяния).</li>
+        <li>Неплотное прилегание частей разборного сердечника.</li>
+        <li>Сопротивление проводов обмоток (потери напряжения).</li>
+      </ul>
+    </details>
+    <div class="tip"><b>Важно</b>Вывод должен опираться на <i>ваши</i> числа. Если в выводе нет ни одного числа из вашей таблицы — перечитайте план.</div>
+  </section>
+
+  <footer>Лабораторная работа № 1 · Физика, 11 класс · Автор: Кунгозин Д.Б.</footer>
+</div>
+
+<script>
+'use strict';
+
+/* Данные вариантов (измеренные значения). N1, N2, k учащиеся вычисляют сами. */
+const VARIANTS = {
+  1: { nd: 20, u1: 12.0, u2: 4.0,  ud: 0.50 },
+  2: { nd: 10, u1: 6.0,  u2: 18.0, ud: 0.30 },
+};
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = (x, d = 1) => x.toFixed(d).replace('.', ',');
+
+let variant = 1;
+
+/* ---------- таблица с данными ---------- */
+function renderRow() {
+  const v = VARIANTS[variant];
+  $('#dataRow').innerHTML = `
+    <td>${variant}</td>
+    <td class="given">${v.nd}</td>
+    <td class="given">${fmt(v.u1)}</td>
+    <td class="given">${fmt(v.u2)}</td>
+    <td class="given">${fmt(v.ud, 2)}</td>
+    <td class="blank">?</td><td class="blank">?</td><td class="blank">?</td>`;
+  $('#checkVariant').textContent = `Вариант ${variant}`;
+  resetCheck();
+}
+
+$$('.tabs button').forEach(btn => btn.addEventListener('click', () => {
+  variant = Number(btn.dataset.v);
+  $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+  renderRow();
+}));
+
+/* ---------- чек-лист шагов ---------- */
+const STORE = 'lab1-transformer-steps';
+const steps = $$('#stepList > li');
+
+function loadSteps() {
+  try { return JSON.parse(localStorage.getItem(STORE)) ?? []; } catch { return []; }
+}
+function saveSteps(arr) {
+  try { localStorage.setItem(STORE, JSON.stringify(arr)); } catch { /* без сохранения */ }
+}
+function updateProgress() {
+  const done = steps.filter(li => $('input', li).checked).length;
+  $('#progText').textContent = `Выполнено: ${done} из ${steps.length}`;
+  $('#progBar').style.width = `${(done / steps.length) * 100}%`;
+}
+const saved = loadSteps();
+steps.forEach((li, i) => {
+  const cb = $('input', li);
+  cb.checked = Boolean(saved[i]);
+  li.classList.toggle('done', cb.checked);
+  cb.addEventListener('change', () => {
+    li.classList.toggle('done', cb.checked);
+    saveSteps(steps.map(s => $('input', s).checked));
+    updateProgress();
+  });
+});
+updateProgress();
+
+/* ---------- самопроверка ---------- */
+const parse = s => {
+  const n = parseFloat(String(s).trim().replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : NaN;
+};
+
+function expected() {
+  const { nd, u1, u2, ud } = VARIANTS[variant];
+  return { n1: nd * u1 / ud, n2: nd * u2 / ud, k: u1 / u2 };
+}
+
+const CHECKS = {
+  n1: { tol: v => Math.max(1, v * 0.01), hint: 'Проверь формулу N₁ = N_доп · U₁ / U_доп и округление до целых.' },
+  n2: { tol: v => Math.max(1, v * 0.01), hint: 'Проверь формулу N₂ = N_доп · U₂ / U_доп и подстановку.' },
+  k:  { tol: () => 0.011,               hint: 'k = U₁ / U₂. Сверь с N₁ / N₂.' },
+};
+
+function setField(key, state, text) {
+  const f = $(`.field[data-key="${key}"]`);
+  f.classList.remove('ok', 'bad');
+  if (state) f.classList.add(state);
+  $('.msg', f).textContent = text;
+}
+
+function resetCheck() {
+  $$('#checkForm input').forEach(i => (i.value = ''));
+  ['n1', 'n2', 'k'].forEach(k => setField(k, '', ''));
+  $('#verdict').textContent = '';
+}
+
+function check() {
+  const exp = expected();
+  let right = 0, empty = 0;
+  for (const key of ['n1', 'n2', 'k']) {
+    const raw = $(`#in-${key}`).value;
+    if (!raw.trim()) { setField(key, '', ''); empty++; continue; }
+    const val = parse(raw);
+    if (Number.isNaN(val)) { setField(key, 'bad', 'Введите число'); continue; }
+    if (Math.abs(val - exp[key]) <= CHECKS[key].tol(exp[key])) {
+      setField(key, 'ok', 'Верно ✓'); right++;
+    } else {
+      setField(key, 'bad', 'Не совпало');
+      $(`.field[data-key="${key}"] .msg`).title = CHECKS[key].hint;
+    }
+  }
+  const v = $('#verdict');
+  if (empty === 3) { v.textContent = 'Введите хотя бы одно значение.'; v.style.color = 'var(--muted)'; return; }
+  if (right === 3) { v.textContent = 'Все три значения верны. Переходите к выводу (раздел 7).'; v.style.color = 'var(--ok)'; return; }
+  const wrong = ['n1', 'n2', 'k'].filter(k => $(`.field[data-key="${k}"]`).classList.contains('bad'));
+  v.style.color = 'var(--bad)';
+  v.textContent = 'Есть расхождения. ' + wrong.map(k => CHECKS[k].hint).join(' ');
+}
+
+$('#checkBtn').addEventListener('click', check);
+$('#resetBtn').addEventListener('click', resetCheck);
+$('#checkForm').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+$('#printBtn').addEventListener('click', () => window.print());
+
+renderRow();
+</script>
+</body>
+</html>
